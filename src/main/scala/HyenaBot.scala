@@ -5,6 +5,8 @@ import info.mukel.telegrambot4s.api._
 import info.mukel.telegrambot4s.api.declarative.{Commands, InlineQueries}
 import info.mukel.telegrambot4s.methods.ParseMode
 
+import scala.concurrent.Future
+
 /**
   * Let me Google that for you!
   */
@@ -38,7 +40,7 @@ case class LNHyenaBot(token: String, soundPath: String, playCommand: String) ext
         )
       case args =>
         val query = args.mkString(" ")
-        playSound(query)
+        Future(playSound(query))
         reply(
           s"$query - is playing",
           disableWebPagePreview = true,
