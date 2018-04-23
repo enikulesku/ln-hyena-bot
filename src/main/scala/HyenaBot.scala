@@ -2,10 +2,12 @@ import java.io.File
 
 import info.mukel.telegrambot4s.Implicits._
 import info.mukel.telegrambot4s.api._
-import info.mukel.telegrambot4s.api.declarative.{Commands, InlineQueries}
+import info.mukel.telegrambot4s.api.declarative.{Args, Commands, InlineQueries}
 import info.mukel.telegrambot4s.methods.ParseMode
+import info.mukel.telegrambot4s.models.Message
 
 import scala.concurrent.Future
+import scala.util.Random
 
 /**
   * Let me Google that for you!
@@ -23,30 +25,54 @@ case class LNHyenaBot(token: String, soundPath: String, playCommand: String) ext
          |
          |/start | /help - list commands
          |
+         |/stop - stop all records
          |/play - list sounds
          |
          |/play args - play sound
+         |
+         |/playRandom - play random sound
       """.stripMargin,
       parseMode = ParseMode.Markdown)
+  }
+
+  onCommand('stop) { implicit msg =>
+    import sys.process._
+    s"killall $playCommand" !
+
+    reply(
+      "Stopped",
+      parseMode = ParseMode.Markdown)
+  }
+
+  onCommand('playRandom) { implicit msg =>
+      play(Random.shuffle(listSounds).head)
   }
 
   onCommand('play) { implicit msg =>
     withArgs {
       case Nil =>
-        val files = new File(soundPath).listFiles(_.getName.endsWith(extension))
-            .map(_.getName.dropRight(extension length))
+        val files = listSounds
         reply(
           files.map(file => s"/play $file").mkString("\n\n")
         )
       case args =>
         val query = args.mkString(" ")
-        Future(playSound(query))
-        reply(
-          s"$query - is playing",
-          disableWebPagePreview = true,
-          parseMode = ParseMode.Markdown
-        )
+        play(query)
     }
+  }
+
+  def listSounds: List[String] = {
+    new File(soundPath).listFiles(_.getName.endsWith(extension))
+      .map(_.getName.dropRight(extension length)).toList
+  }
+
+  def play(query: String)(implicit msg: Message) = {
+    Future(playSound(query))
+    reply(
+      s"$query - is playing",
+      disableWebPagePreview = true,
+      parseMode = ParseMode.Markdown
+    )
   }
 
   def playSound(query: String): Unit = {
