@@ -75,6 +75,8 @@ case class LNHyenaBot(token: String, soundPath: String, playCommand: String) ext
     import sys.process._
     s"killall $playCommand" !
 
+    s"killall espeak" !
+
     reply(
       "Stopped",
       parseMode = ParseMode.Markdown)
