@@ -31,8 +31,22 @@ case class LNHyenaBot(token: String, soundPath: String, playCommand: String) ext
          |/play args - play sound
          |
          |/playRandom - play random sound
+         |
+         |/say - text
       """.stripMargin,
       parseMode = ParseMode.Markdown)
+  }
+
+  onCommand('say) { implicit msg =>
+    withArgs { args =>
+      val query = args.mkString("\t")
+      import sys.process._
+      Seq("/bin/sh", "-c", s"espeak -s 120 -a 200 '$query'").!!.trim
+
+      reply(
+        s"'$query' - saying",
+        parseMode = ParseMode.Markdown)
+    }
   }
 
   onCommand('stop) { implicit msg =>
