@@ -7,7 +7,7 @@ import info.mukel.telegrambot4s.methods.ParseMode
 import info.mukel.telegrambot4s.models.Message
 
 import scala.concurrent.Future
-import scala.util.Random
+import scala.util.{Random, Try}
 
 /**
   * Let me Google that for you!
@@ -26,6 +26,8 @@ case class LNHyenaBot(token: String, soundPath: String, playCommand: String) ext
          |/start | /help - list commands
          |
          |/stop - stop all records
+         |/mute
+         |/unmute
          |/play - list sounds
          |
          |/play args - play sound
@@ -62,9 +64,9 @@ case class LNHyenaBot(token: String, soundPath: String, playCommand: String) ext
     say("ready for Acceptance Testing")
   }
 
-  private def say(query: String)(implicit msg: Message) = {
+  private def say(query: String, lang: String = "en-us")(implicit msg: Message) = {
     import sys.process._
-    Seq("/bin/sh", "-c", s"espeak -s 120 -a 200 '$query'").!!.trim
+    Future(Seq("/bin/sh", "-c", s"espeak -s 120 -a 200 -v $lang '$query'").!!.trim)
 
     reply(
       s"'$query' - saying",
@@ -73,12 +75,30 @@ case class LNHyenaBot(token: String, soundPath: String, playCommand: String) ext
 
   onCommand('stop) { implicit msg =>
     import sys.process._
-    s"killall $playCommand" !
+    Try(s"killall $playCommand" !)
 
-    s"killall espeak" !
+    Try(s"killall espeak" !)
 
     reply(
       "Stopped",
+      parseMode = ParseMode.Markdown)
+  }
+
+  onCommand('mute) { implicit msg =>
+    import sys.process._
+    Try(s"amixer set -c 0 Master 10 unmute" !)
+
+    reply(
+      "Mute",
+      parseMode = ParseMode.Markdown)
+  }
+
+  onCommand('unmute) { implicit msg =>
+    import sys.process._
+    Try(s"amixer set -c 0 Master 100 unmute" !)
+
+    reply(
+      "Mute",
       parseMode = ParseMode.Markdown)
   }
 
